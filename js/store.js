@@ -114,6 +114,7 @@
      로그인: 익명 로그인 + 사무장 승인 방식 (아이디·비밀번호 없이 휴대폰 단위로 가입)
      사무장 지정: Firestore 콘솔에서 members/{사무장 uid} 문서의 admin 값을 true로 바꿉니다. */
   function FirebaseStore(pid) {
+    const seed = window.PRESBYTERY_DATA[pid];
     let fs, auth, me = null, base;
     const col = name => base.collection(name);
     const list = async (q) => (await q.get()).docs.map(d => ({id:d.id, ...d.data()}));
@@ -154,7 +155,8 @@
       },
 
       async listNotices() {
-        const rows = await list(col('notices').orderBy('date', 'desc').limit(100));
+        const seedN = seed.notices.map(n => ({...n, id:'n' + n.seq, body:'', source:'homepage', createdAt:n.date + 'T09:00:00+09:00'}));
+        const rows = (await list(col('notices').orderBy('date', 'desc').limit(100))).concat(seedN);
         return rows.sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || b.date.localeCompare(a.date));
       },
       async addNotice(n) {
@@ -167,7 +169,10 @@
       async readNotice(id) { const k = 'nm_read_' + pid; const a = JSON.parse(localStorage.getItem(k) || '[]'); if (!a.includes(id)) { a.push(id); localStorage.setItem(k, JSON.stringify(a)); } },
       async readNoticeIds() { return JSON.parse(localStorage.getItem('nm_read_' + pid) || '[]'); },
 
-      async listEvents() { return list(col('events').orderBy('date')); },
+      async listEvents() {
+        const seedE = seed.events.map((e, i) => ({...e, id:'e' + i, time:e.time || '', place:e.place || '', source:'homepage'}));
+        return (await list(col('events').orderBy('date'))).concat(seedE).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+      },
       async addEvent(e) { const ref = await col('events').add(e); await notify('*', '새 일정', `${e.date} ${e.title}`, 'calendar'); return {id:ref.id, ...e}; },
       async deleteEvent(id) { await col('events').doc(id).delete(); },
 
@@ -188,8 +193,11 @@
 
       async listNotifications() {
         const targets = ['*', me.id].concat(me.admin ? ['admin'] : []);
-        const rows = await list(col('notifications').where('to', 'in', targets).orderBy('createdAt', 'desc').limit(50));
-        return rows.map(n => ({...n, read:(n.readBy || []).includes(me.id)}));
+        try {
+          const rows = await list(col('notifications').where('to', 'in', targets));
+          return rows.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 50)
+            .map(n => ({...n, read:(n.readBy || []).includes(me.id)}));
+        } catch (e) { console.error('알림을 불러오지 못했습니다', e); return []; }
       },
       async markNotificationsRead() {
         const rows = await this.listNotifications();

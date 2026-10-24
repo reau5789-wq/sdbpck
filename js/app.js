@@ -248,7 +248,7 @@
       </div>
       ${url ? `<div class="btns"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${ic('ext', 18)} 홈페이지 원문·첨부파일 보기</a></div>` : ''}
       <div class="btns"><button class="btn line" data-share>${ic('ext', 18)} 카카오톡 등으로 공유</button></div>
-      ${me.admin ? `<div class="btns"><button class="btn danger" data-del>이 공지 삭제</button></div>` : ''}`});
+      ${me.admin && n.source === 'app' ? `<div class="btns"><button class="btn danger" data-del>이 공지 삭제</button></div>` : ''}`});
     bindCommon();
     $app.querySelector('[data-share]').onclick = () => {
       const text = `[${P.name}] ${n.title}` + (url ? '\n' + url : '');
@@ -571,7 +571,7 @@
         <label class="check"><input type="checkbox" name="important"><span>중요 일정으로 표시 (정기노회 등)</span></label>
         <button class="btn" type="submit">일정 등록</button></form>
         <h2 class="sec">앞으로의 일정</h2>
-        <div class="list">${evs.map(e => `<div class="row" style="cursor:default"><span class="grow"><span class="t">${esc(e.title)}</span><span class="s">${kdate(e.date)} ${esc(e.time || '')} ${esc(e.place || '')}</span></span><button class="btn danger sm" data-delev="${e.id}">삭제</button></div>`).join('') || '<div class="empty">등록된 일정이 없습니다</div>'}</div>`;
+        <div class="list">${evs.map(e => `<div class="row" style="cursor:default"><span class="grow"><span class="t">${esc(e.title)}</span><span class="s">${kdate(e.date)} ${esc(e.time || '')} ${esc(e.place || '')}</span></span>${e.source === 'homepage' ? '<span class="pill navy">홈페이지</span>' : `<button class="btn danger sm" data-delev="${e.id}">삭제</button>`}</div>`).join('') || '<div class="empty">등록된 일정이 없습니다</div>'}</div>`;
     }
     if (sub === 'members') {
       const all = await S.listMembers();

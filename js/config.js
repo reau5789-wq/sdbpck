@@ -9,19 +9,19 @@ window.APP_CONFIG = {
 
   /* 'demo' = 이 휴대폰 안에서만 저장되는 체험 모드
      'live' = Firebase에 연결된 실제 운영 모드 (firebase 항목 입력 후) */
-  mode: 'demo',
+  mode: 'live',
 
   /* 현재 앱이 기본으로 여는 노회 */
   defaultPresbytery: 'sdbpck',
 
   /* Firebase 콘솔 > 프로젝트 설정 > 내 앱(웹)에서 복사해 붙여넣기 */
   firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: ''
+    apiKey: 'AIzaSyBOWDZxR-dfiAzb2Il4LumXtAtKyWokkxc',
+    authDomain: 'nohoe-mobile.firebaseapp.com',
+    projectId: 'nohoe-mobile',
+    storageBucket: 'nohoe-mobile.firebasestorage.app',
+    messagingSenderId: '144015911356',
+    appId: '1:144015911356:web:72adf70759d8831ba423b9'
   },
 
   presbyteries: {
