@@ -1,0 +1,43 @@
+rules_version = '2';
+// 노회 모바일 Firestore 보안 규칙
+// 경로: presbyteries/{노회ID}/{members|notices|events|requests|notifications}/{문서}
+// - 가입 신청: 본인 문서만 만들 수 있고 status는 'pending', admin은 false로만 생성
+// - 승인된 회원: 공지·일정·알림 읽기, 본인 신청 만들기·읽기
+// - 사무장(admin=true): 모든 것 읽기·쓰기, 회원 승인
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /presbyteries/{pid} {
+
+      function me() { return get(/databases/$(database)/documents/presbyteries/$(pid)/members/$(request.auth.uid)).data; }
+      function isMember() { return request.auth != null && exists(/databases/$(database)/documents/presbyteries/$(pid)/members/$(request.auth.uid)) && me().status == 'approved'; }
+      function isAdmin() { return isMember() && me().admin == true; }
+
+      match /members/{uid} {
+        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow create: if request.auth != null && request.auth.uid == uid
+                      && request.resource.data.status == 'pending' && request.resource.data.admin == false;
+        allow update: if isAdmin()
+                      || (request.auth != null && request.auth.uid == uid
+                          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'admin']));
+        allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      }
+
+      match /notices/{id} { allow read: if isMember(); allow write: if isAdmin(); }
+      match /events/{id}  { allow read: if isMember(); allow write: if isAdmin(); }
+
+      match /requests/{id} {
+        allow read: if isAdmin() || (isMember() && resource.data.uid == request.auth.uid);
+        allow create: if isMember() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'received';
+        allow update, delete: if isAdmin();
+      }
+
+      match /notifications/{id} {
+        // 가입 신청자도 '새 가입 신청' 알림(to:'admin')은 만들 수 있어야 함
+        allow read: if isMember();
+        allow create: if request.auth != null;
+        allow update: if isMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+        allow delete: if isAdmin();
+      }
+    }
+  }
+}

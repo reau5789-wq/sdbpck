@@ -1,0 +1,18 @@
+{
+  "name": "서울동북노회 모바일",
+  "short_name": "서울동북노회",
+  "description": "서울동북노회 회원교회 목사님·장로님을 위한 노회 업무 앱 — 공지, 일정, 증명서·공문서 신청",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1d3557",
+  "theme_color": "#1d3557",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
