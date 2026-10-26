@@ -109,9 +109,15 @@
         <h1>${esc(P.name)} 모바일</h1>
         <p class="sub">회원교회 목사님·장로님을 위한 노회 업무 앱</p>
         <div class="card">
-          <h2 class="sec" style="margin-top:0">처음 오셨나요?</h2>
-          <p class="small muted" style="margin:0 0 14px">가입 신청을 하시면 노회 사무국에서 확인 후 승인해 드립니다. 승인되면 공지·일정을 받아보고 증명서를 신청하실 수 있습니다.</p>
-          <button class="btn" data-signup>가입 신청하기</button>
+          ${S.mode === 'live' ? `
+            <h2 class="sec" style="margin-top:0">로그인</h2>
+            <p class="small muted" style="margin:0 0 14px">평소 쓰시는 카카오나 구글 계정으로 들어오세요. 처음이시면 로그인 후 가입 신청을 하시고, 노회 사무국 승인 후 이용하실 수 있습니다.</p>
+            ${(C.login || {}).kakao ? `<button class="btn kakao" data-login="kakao">카카오 계정으로 시작</button>` : ''}
+            ${(C.login || {}).google ? `<div class="btns"><button class="btn google" data-login="google">구글 계정으로 시작</button></div>` : ''}
+            <p class="hint" style="margin-top:12px">한 번 가입하면 휴대폰과 PC 어디서든 같은 계정으로 쓰실 수 있습니다.</p>` : `
+            <h2 class="sec" style="margin-top:0">처음 오셨나요?</h2>
+            <p class="small muted" style="margin:0 0 14px">가입 신청을 하시면 노회 사무국에서 확인 후 승인해 드립니다. 승인되면 공지·일정을 받아보고 증명서를 신청하실 수 있습니다.</p>
+            <button class="btn" data-signup>가입 신청하기</button>`}
           ${S.mode === 'demo' ? `
             <div style="border-top:1px solid var(--line);margin:18px 0 14px"></div>
             <p class="small muted" style="margin:0 0 10px">먼저 둘러보시려면</p>
@@ -127,8 +133,30 @@
         </div>
         <div class="foot">${esc(C.copyright)}</div>
       </div>`;
-    $app.querySelector('[data-signup]').onclick = viewSignup;
+    const su = $app.querySelector('[data-signup]'); if (su) su.onclick = viewSignup;
+    $app.querySelectorAll('[data-login]').forEach(b => b.onclick = () => doLogin(b.dataset.login, b));
     $app.querySelectorAll('[data-demo]').forEach(b => b.onclick = async () => { me = await S.demoLogin(b.dataset.demo); await refreshBadges(); go('#home'); route(); });
+  }
+
+  async function doLogin(kind, btn) {
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '로그인 중…'; }
+    try {
+      me = await S.socialSignIn(kind);
+      if (me) { toast(me.status === 'approved' ? '로그인했습니다' : '가입 신청 상태를 확인합니다'); await route(); }
+      else viewSignup();
+    } catch (e) {
+      const msg = {
+        'auth/popup-closed-by-user':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
+        'auth/cancelled-popup-request':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
+        'auth/popup-blocked':'팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.',
+        'auth/operation-not-allowed':'이 로그인 방법이 아직 준비되지 않았습니다. 사무국에 알려 주세요.',
+        'auth/unauthorized-domain':'로그인이 허용되지 않은 주소입니다. 관리자에게 알려 주세요.',
+        'auth/network-request-failed':'인터넷 연결을 확인해 주세요.'
+      }[e.code] || ('로그인하지 못했습니다: ' + (e.code || e.message));
+      toast(msg); console.error(e);
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }
   }
 
   function viewSignup() {
@@ -143,7 +171,7 @@
         <div class="field"><label id="chl">교회(기관)<em>*</em></label>
           <select class="input" name="church" required></select></div>
         <div class="two">
-          <div class="field"><label>성명<em>*</em></label><input class="input" name="name" required autocomplete="name"></div>
+          <div class="field"><label>성명<em>*</em></label><input class="input" name="name" required autocomplete="name" value="${esc(S.authName())}"></div>
           <div class="field"><label>직분<em>*</em></label><select class="input" name="role">${P.roles.map(r => `<option>${r}</option>`).join('')}</select></div>
         </div>
         <div class="field"><label>휴대폰 번호<em>*</em></label><input class="input" name="phone" type="tel" inputmode="tel" required placeholder="010-0000-0000" autocomplete="tel"></div>
@@ -158,7 +186,7 @@
       $app.querySelector('#chl').innerHTML = (isOffice(f.group.value) ? '소속' : '교회(기관)') + '<em>*</em>';
     };
     f.group.onchange = fill; fill();
-    $app.querySelector('[data-back]').onclick = () => viewWelcome();
+    $app.querySelector('[data-back]').onclick = async () => { if (S.mode === 'live') await S.logout(); me = null; viewWelcome(); };
     f.onsubmit = async e => {
       e.preventDefault();
       if (digits(f.phone.value).length < 10) return toast('휴대폰 번호를 확인해 주세요');
@@ -180,12 +208,13 @@
           <div class="btns"><a class="btn line" href="${telHref(P.office.tel)}">${ic('phone', 20)} 사무국 전화</a></div>
           ${S.mode === 'demo' ? `<div class="note gold">체험 모드: 아래 버튼으로 사무장 화면에 들어가 방금 신청을 직접 승인해 보실 수 있습니다.</div>
             <div class="btns"><button class="btn soft" data-admin>사무장으로 승인해 보기</button></div>` : ''}
-          <div class="btns"><button class="btn danger sm" data-cancel>신청 취소</button></div>
+          <div class="btns">${S.mode === 'live' ? `<button class="btn line sm" data-logout>다른 계정으로 로그인</button>` : ''}<button class="btn danger sm" data-cancel>신청 취소</button></div>
         </div>
       </div>`;
     $app.querySelector('[data-r]').onclick = async () => { me = await S.refreshMe(); if (me && me.status === 'approved') { toast('승인되었습니다'); await refreshBadges(); go('#home'); } else toast('아직 승인 전입니다'); route(); };
     const a = $app.querySelector('[data-admin]'); if (a) a.onclick = async () => { me = await S.demoLogin('admin'); go('#admin/members'); route(); };
-    $app.querySelector('[data-cancel]').onclick = async () => { if (await confirmBox('가입 신청을 취소할까요?', '취소하기')) { await S.logout(); me = null; route(); } };
+    $app.querySelector('[data-cancel]').onclick = async () => { if (await confirmBox('가입 신청을 취소할까요?', '취소하기')) { await S.withdraw(); me = null; route(); } };
+    const lo = $app.querySelector('[data-logout]'); if (lo) lo.onclick = async () => { await S.logout(); me = null; route(); };
   }
 
   function churchLogo(s) {
@@ -482,7 +511,7 @@
   function viewMore() {
     const fs = localStorage.getItem('nm_fs') || 'm';
     $app.innerHTML = frame({title:'더보기', sub:P.name, tab:'more', body:`
-      <div class="card"><b>${esc(me.name)} ${esc(honor(me.role))}</b><div class="small muted">${esc(me.church)}${me.group ? ' · ' + esc(me.group) : ''} · ${esc(me.phone || '')}</div></div>
+      <div class="card"><b>${esc(me.name)} ${esc(honor(me.role))}</b><div class="small muted">${esc(me.church)}${me.group ? ' · ' + esc(me.group) : ''} · ${esc(me.phone || '')}</div>${S.mode === 'live' ? `<div class="hint">${S.isLegacyDevice() ? '이 기기로 가입' : S.providerId().includes('google') ? '구글 계정으로 로그인' : '카카오 계정으로 로그인'}</div>` : ''}</div>
       <h2 class="sec">노회 업무</h2>
       <div class="list">
         <a class="row" href="#churches"><span class="grow"><span class="t">노회 주소록</span><span class="s">${D.directory.length}개 교회·기관 · 전화·길찾기</span></span><span class="chev">${ic('chev', 18)}</span></a>
@@ -498,15 +527,25 @@
         <a class="row" href="privacy.html" target="_blank"><span class="grow"><span class="t">개인정보처리방침</span></span><span class="chev">${ic('chev', 18)}</span></a>
         <div class="row" style="cursor:default"><span class="grow"><span class="t">버전</span></span><span class="muted small">${C.version}${S.mode === 'demo' ? ' (체험)' : ''}</span></div>
       </div>
-      <div class="btns"><button class="btn danger" data-out>${S.mode === 'demo' ? '체험 마치기' : '이 휴대폰에서 탈퇴'}</button></div>
+      ${S.mode === 'live' && S.isLegacyDevice() ? `<div class="note gold" style="margin-top:18px"><b>계정 연결을 권합니다</b><br>지금은 이 기기에만 가입되어 있습니다. 카카오나 구글 계정을 연결하면 다른 기기에서도 같은 회원으로 들어오실 수 있습니다.</div>
+        <div class="btns">${(C.login || {}).kakao ? `<button class="btn kakao" data-link="kakao">카카오 연결</button>` : ''}${(C.login || {}).google ? `<button class="btn google" data-link="google">구글 연결</button>` : ''}</div>` : ''}
+      ${S.mode === 'live' ? `<div class="btns"><button class="btn line" data-logout>로그아웃</button></div>
+        <div class="btns"><button class="btn danger sm" data-out>회원 탈퇴</button></div>` :
+        `<div class="btns"><button class="btn danger" data-out>체험 마치기</button></div>`}
       ${S.mode === 'demo' ? `<div class="btns"><button class="btn line sm" data-reset>체험 자료 처음 상태로</button></div>` : ''}
       <div class="foot">${esc(C.copyright)}</div>`});
     bindCommon();
     $app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { localStorage.setItem('nm_fs', b.dataset.fs); applyFs(); viewMore(); });
     $app.querySelector('[data-out]').onclick = async () => {
-      const msg = S.mode === 'demo' ? '체험을 마치고 첫 화면으로 갈까요?' : '이 휴대폰에서 탈퇴하면 다시 가입 신청과 승인이 필요합니다. 계속할까요?';
-      if (await confirmBox(msg, '확인')) { await S.logout(); me = null; location.hash = ''; route(); }
+      const msg = S.mode === 'demo' ? '체험을 마치고 첫 화면으로 갈까요?' : '탈퇴하면 회원 정보가 지워지고, 다시 쓰시려면 가입 신청과 승인이 필요합니다. 계속할까요?';
+      if (await confirmBox(msg, '확인')) { await (S.mode === 'demo' ? S.logout() : S.withdraw()); me = null; location.hash = ''; route(); }
     };
+    const lo = $app.querySelector('[data-logout]');
+    if (lo) lo.onclick = async () => { if (await confirmBox('이 기기에서 로그아웃할까요? 다시 로그인하면 그대로 쓰실 수 있습니다.', '로그아웃')) { await S.logout(); me = null; location.hash = ''; route(); } };
+    $app.querySelectorAll('[data-link]').forEach(b => b.onclick = async () => {
+      try { await S.socialSignIn(b.dataset.link); me = await S.refreshMe(); toast('계정을 연결했습니다'); viewMore(); }
+      catch (e) { toast('연결하지 못했습니다: ' + (e.code || e.message)); console.error(e); }
+    });
     const rs = $app.querySelector('[data-reset]');
     if (rs) rs.onclick = async () => { if (await confirmBox('체험 중 입력한 내용을 모두 지울까요?', '지우기')) { await S.resetDemo(); me = null; location.hash = ''; route(); } };
   }
@@ -619,7 +658,7 @@
   async function route() {
     window.scrollTo(0, 0);
     if (!me) me = await S.currentUser();
-    if (!me) return viewWelcome();
+    if (!me) return (S.mode === 'live' && S.isSignedIn() && !S.isLegacyDevice()) ? viewSignup() : viewWelcome();
     if (me.status !== 'approved') return viewPending();
     const [page, arg] = location.hash.replace(/^#/, '').split('/');
     await refreshBadges();

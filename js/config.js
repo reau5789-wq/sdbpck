@@ -4,12 +4,19 @@
    ================================================================ */
 window.APP_CONFIG = {
   appName: '노회 모바일',
-  version: '1.0.2',
+  version: '1.1.0',
   copyright: 'ⓒ2026 Barista of Soul, All Rights Reserved.',
 
   /* 'demo' = 이 휴대폰 안에서만 저장되는 체험 모드
      'live' = Firebase에 연결된 실제 운영 모드 (firebase 항목 입력 후) */
   mode: 'live',
+
+  /* 로그인 방법 — Firebase Authentication에서 켠 것만 true로 */
+  login: {
+    google: true,
+    kakao: false,              // 카카오 OIDC 설정을 마치면 true로
+    kakaoProviderId: 'oidc.kakao'
+  },
 
   /* 현재 앱이 기본으로 여는 노회 */
   defaultPresbytery: 'sdbpck',

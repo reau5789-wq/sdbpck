@@ -58,6 +58,9 @@
       async refreshMe() { if (db.me) { const m = db.members.find(x => x.id === db.me.id); if (m) db.me = {...db.me, ...m}; save(); } return db.me; },
       async updateMe(patch) { db.me = {...db.me, ...patch}; const m = db.members.find(x => x.id === db.me.id); if (m) Object.assign(m, patch); save(); return db.me; },
       async logout() { db.me = null; save(); },
+      async withdraw() { db.me = null; save(); },
+      isSignedIn() { return false; }, isLegacyDevice() { return false; }, authName() { return ''; }, providerId() { return ''; },
+      async socialSignIn() { throw new Error('체험 모드에서는 쓸 수 없습니다'); },
       async resetDemo() { localStorage.removeItem(KEY); load(); },
 
       async listMembers(status) { return db.members.filter(m => !status || m.status === status); },
@@ -127,22 +130,50 @@
         fs = firebase.firestore(); auth = firebase.auth();
         base = fs.collection('presbyteries').doc(pid);
         await new Promise(res => { const off = auth.onAuthStateChanged(() => { off(); res(); }); });
-        if (!auth.currentUser) await auth.signInAnonymously();
-        const snap = await col('members').doc(auth.currentUser.uid).get();
-        me = snap.exists ? {id:snap.id, ...snap.data()} : null;
+        await this.refreshMe();
+      },
+      /* 로그인 상태: 카카오·구글로 로그인했거나, 예전 방식(기기 가입)으로 이미 회원인 경우 */
+      isSignedIn() { return !!auth.currentUser; },
+      isLegacyDevice() { return !!(auth.currentUser && auth.currentUser.isAnonymous); },
+      authName() { return (auth.currentUser && auth.currentUser.displayName) || ''; },
+      providerId() { const u = auth.currentUser; return u && u.providerData[0] ? u.providerData[0].providerId : ''; },
+      /* 카카오·구글 로그인. 예전 기기 가입 상태라면 같은 회원 정보를 그대로 이어 씁니다(계정 연결). */
+      async socialSignIn(kind) {
+        const L = C.login || {};
+        const provider = kind === 'google' ? new firebase.auth.GoogleAuthProvider() : new firebase.auth.OAuthProvider(L.kakaoProviderId || 'oidc.kakao');
+        if (kind !== 'google') { provider.addScope('openid'); provider.addScope('profile_nickname'); }
+        else provider.setCustomParameters({prompt:'select_account'});
+        const cur = auth.currentUser;
+        if (cur && cur.isAnonymous) {
+          try { await cur.linkWithPopup(provider); }
+          catch (e) {
+            if (e.code === 'auth/credential-already-in-use' && e.credential) await auth.signInWithCredential(e.credential);
+            else throw e;
+          }
+        } else {
+          await auth.signInWithPopup(provider);
+        }
+        return this.refreshMe();
       },
       async currentUser() { return me; },
       async demoLogin() { throw new Error('운영 모드에서는 체험하기를 쓸 수 없습니다.'); },
       async signup(profile) {
         const id = auth.currentUser.uid;
-        const m = {...profile, status:'pending', admin:false, createdAt:nowIso()};
+        const m = {...profile, status:'pending', admin:false, createdAt:nowIso(), provider:(auth.currentUser.providerData[0] || {}).providerId || 'device'};
         await col('members').doc(id).set(m);
         await notify('admin', '새 가입 신청', `${profile.church} ${profile.name} ${profile.role}`, 'admin');
         me = {id, ...m}; return me;
       },
-      async refreshMe() { const s = await col('members').doc(auth.currentUser.uid).get(); me = s.exists ? {id:s.id, ...s.data()} : null; return me; },
+      async refreshMe() {
+        if (!auth.currentUser) { me = null; return me; }
+        const s = await col('members').doc(auth.currentUser.uid).get();
+        me = s.exists ? {id:s.id, ...s.data()} : null; return me;
+      },
       async updateMe(patch) { await col('members').doc(me.id).update(patch); me = {...me, ...patch}; return me; },
-      async logout() { await col('members').doc(me.id).delete().catch(() => {}); await auth.signOut(); me = null; },
+      /* 로그아웃: 회원 정보는 남기고 이 기기에서만 나갑니다 */
+      async logout() { await auth.signOut(); me = null; },
+      /* 탈퇴: 회원 정보를 지웁니다 */
+      async withdraw() { if (me) await col('members').doc(me.id).delete().catch(() => {}); await auth.signOut(); me = null; },
       async resetDemo() {},
 
       async listMembers(status) {
