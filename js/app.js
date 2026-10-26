@@ -218,7 +218,7 @@
   }
 
   function churchLogo(s) {
-    return `<svg width="${s}" height="${s}" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1d3557"/><path d="M24 8v9M19.5 12.5h9" stroke="#e0b65a" stroke-width="3" stroke-linecap="round"/><path d="M12 38V26l12-8 12 8v12z" fill="#fff"/><path d="M21 38v-6a3 3 0 0 1 6 0v6" fill="#1d3557"/></svg>`;
+    return `<img src="icons/logo.png" width="${s + 14}" height="${s + 14}" alt="${esc(P.name)} 로고" style="display:block;border-radius:50%">`;
   }
 
   /* ---------- 홈 ---------- */
