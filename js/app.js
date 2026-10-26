@@ -105,9 +105,9 @@
     const others = Object.values(C.presbyteries).filter(p => p.id !== P.id);
     $app.innerHTML = `
       <div class="welcome">
-        <div class="logo">${churchLogo(46)}</div>
-        <h1>${esc(P.name)} 모바일</h1>
-        <p class="sub">회원교회 목사님·장로님을 위한 노회 업무 앱</p>
+        <div class="brand"><img src="icons/wordmark.png" alt="대한예수교장로회 ${esc(P.name)}" width="223" height="58"></div>
+        <h1>모바일 업무 앱</h1>
+        <p class="sub">회원교회 목사님·장로님과 노회 사무국을 잇습니다</p>
         <div class="card">
           ${S.mode === 'live' ? `
             <h2 class="sec" style="margin-top:0">로그인</h2>
