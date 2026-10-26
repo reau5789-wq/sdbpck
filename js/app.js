@@ -25,7 +25,7 @@
   const mapHref = addr => 'https://map.kakao.com/link/search/' + encodeURIComponent(String(addr || '').replace(/^\d{5}\s*/, ''));
   const validHome = u => u && /^https?:\/\/[^/]+\.[^/]+/.test(u);
   const churchOf = name => D.directory.find(r => r[1] === name);
-  const honor = role => ({'목사':'목사님','장로':'장로님','전도사':'전도사님','선교사':'선교사님','사무장':'사무장님'}[role] || '님');
+  const honor = role => ({'목사':'목사님','장로':'장로님','전도사':'전도사님','선교사':'선교사님','사무장':'사무장님','사무국 직원':'님'}[role] || '님');
   const STATUS = {received:['접수','info'], working:['처리 중','warn'], done:['처리 완료','ok'], rejected:['반려','bad']};
   const statusPill = s => `<span class="pill ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
 
@@ -132,13 +132,15 @@
   }
 
   function viewSignup() {
-    const churches = g => D.directory.filter(r => r[0] === g).map(r => r[1]);
+    const isOffice = g => g === P.officeGroup;
+    const churches = g => isOffice(g) ? [P.officeGroup] : D.directory.filter(r => r[0] === g).map(r => r[1]);
+    const roles = g => isOffice(g) ? P.officeRoles : P.roles;
     $app.innerHTML = frame({title:'가입 신청', sub:P.name, back:true, noTabs:true, body:`
       <div class="note" style="margin:0 0 16px">이 앱은 ${esc(P.name)} 회원교회 교역자와 장로님 전용입니다. 사무국이 명단과 대조해 승인합니다.</div>
       <form id="f">
         <div class="field"><label>소속 시찰·기관<em>*</em></label>
           <select class="input" name="group" required>${P.memberGroups.map(g => `<option>${g}</option>`).join('')}</select></div>
-        <div class="field"><label>교회(기관)<em>*</em></label>
+        <div class="field"><label id="chl">교회(기관)<em>*</em></label>
           <select class="input" name="church" required></select></div>
         <div class="two">
           <div class="field"><label>성명<em>*</em></label><input class="input" name="name" required autocomplete="name"></div>
@@ -150,7 +152,11 @@
       </form>`});
     bindCommon();
     const f = $app.querySelector('#f');
-    const fill = () => { f.church.innerHTML = churches(f.group.value).map(c => `<option>${esc(c)}</option>`).join(''); };
+    const fill = () => {
+      f.church.innerHTML = churches(f.group.value).map(c => `<option>${esc(c)}</option>`).join('');
+      f.role.innerHTML = roles(f.group.value).map(r => `<option>${esc(r)}</option>`).join('');
+      $app.querySelector('#chl').innerHTML = (isOffice(f.group.value) ? '소속' : '교회(기관)') + '<em>*</em>';
+    };
     f.group.onchange = fill; fill();
     $app.querySelector('[data-back]').onclick = () => viewWelcome();
     f.onsubmit = async e => {
@@ -325,6 +331,7 @@
   }
 
   function churchPrefill() {
+    if (me.church === P.officeGroup) return {church:P.officeGroup, pastor:'', address:P.office.address, tel:P.office.tel, fax:P.office.fax};
     const c = churchOf(me.church) || [];
     return {church:me.church, pastor:c[2] || '', address:c[3] || '', tel:c[4] || '', fax:c[5] || ''};
   }
