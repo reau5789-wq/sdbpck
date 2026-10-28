@@ -143,10 +143,10 @@
         </div>
         <div class="card small">
           <b>${esc(P.fullName)}</b><br>
-          <span class="muted">사무국 ${esc(P.office.tel)} · ${esc(P.office.email)}</span>
+          <span class="muted">전화 ${esc(P.office.tel)} · 팩스 ${esc(P.office.fax)} · ${esc(P.office.email)}</span>
           ${others.length ? `<div class="hint">다른 노회: ${others.map(o => esc(o.name)).join(', ')}</div>` : `<div class="hint">예장통합 다른 노회도 같은 앱으로 쓰실 수 있도록 준비 중입니다.</div>`}
         </div>
-        <div class="foot">${esc(C.copyright)}</div>
+        <div class="foot">${esc(P.fullName)} · ${esc(P.office.address)}<br>${esc(C.copyright)}</div>
       </div>`;
     const su = $app.querySelector('[data-signup]'); if (su) su.onclick = viewSignup;
     const jn = $app.querySelector('[data-join]'); if (jn) jn.onclick = viewJoin;
@@ -603,7 +603,7 @@
         <div class="btns"><button class="btn danger sm" data-out>회원 탈퇴</button></div>` :
         `<div class="btns"><button class="btn danger" data-out>체험 마치기</button></div>`}
       ${S.mode === 'demo' ? `<div class="btns"><button class="btn line sm" data-reset>체험 자료 처음 상태로</button></div>` : ''}
-      <div class="foot">${esc(C.copyright)}</div>`});
+      <div class="foot">${esc(P.fullName)} · ${esc(P.office.address)}<br>${esc(C.copyright)}</div>`});
     bindCommon();
     $app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { localStorage.setItem('nm_fs', b.dataset.fs); applyFs(); viewMore(); });
     $app.querySelector('[data-out]').onclick = async () => {
