@@ -195,5 +195,11 @@ textarea.input{min-height:110px;resize:vertical}
 .btn.kakao{background:#FEE500;color:rgba(0,0,0,.85)}
 .btn.google{background:#fff;color:#1f1f1f;border:1.5px solid #c6ccd4}
 
+/* .brand: 노회 가로 로고(보류) */
 .welcome .brand{background:#fff;border-radius:18px;padding:14px 20px;margin:0 auto 16px;width:max-content;max-width:100%;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .welcome .brand img{display:block;height:58px;width:auto;max-width:100%}
+
+.tabs button{font-size:.7em}
+.or{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:.8em;margin:18px 0 14px}
+.or::before,.or::after{content:'';flex:1;height:1px;background:var(--line)}
+.linkbtn{background:none;border:0;color:var(--info);font-size:.84em;cursor:pointer;padding:4px 0;text-decoration:underline}
