@@ -67,8 +67,9 @@ function monthsToSync() {
   return list;
 }
 
+const UA = 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)';
 async function getText(url, extra = {}) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)', ...extra } });
+  const res = await fetch(url, { headers: { 'User-Agent': UA, ...extra } });
   if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
   return res.text();
 }
@@ -95,8 +96,11 @@ async function main() {
   const months = monthsToSync();
   const fresh = [];
   try {
+    // 달력은 홈페이지 세션 쿠키가 있어야 응답하므로 첫 화면을 먼저 엽니다
+    const home = await fetch(`${SITE}/`, { headers: { 'User-Agent': UA } });
+    const cookie = (home.headers.getSetCookie?.() || []).map(c => c.split(';')[0]).join('; ');
     for (const ym of months) {
-      const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`, { 'Referer': `${SITE}/`, 'X-Requested-With': 'XMLHttpRequest' });
+      const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`, { 'Referer': `${SITE}/`, 'X-Requested-With': 'XMLHttpRequest', ...(cookie ? { Cookie: cookie } : {}) });
       fresh.push(...parseCalendar(t));
     }
   } catch (e) {
