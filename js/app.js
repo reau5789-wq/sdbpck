@@ -245,7 +245,7 @@
           <div class="field"><label>직분<em>*</em></label><select class="input" name="role">${P.roles.map(r => `<option>${r}</option>`).join('')}</select></div>
         </div>
         <div class="field"><label>휴대폰 번호<em>*</em></label><input class="input" name="phone" type="tel" inputmode="tel" required placeholder="010-0000-0000" autocomplete="tel"></div>
-        <label class="check"><input type="checkbox" name="agree" required><span class="small">노회 업무 처리를 위해 성명·교회·직분·휴대폰 번호를 수집하는 데 동의합니다. <a href="privacy.html" target="_blank">개인정보처리방침</a></span></label>
+        <label class="check"><input type="checkbox" name="agree" required><span class="small">노회 업무 처리를 위해 로그인 이메일과 성명·교회·직분·휴대폰 번호를 수집·이용하는 데 동의합니다. 로그인 정보는 Google Firebase(국외 서버)에서 처리됩니다. <a href="privacy.html" target="_blank">개인정보처리방침</a></span></label>
         <button class="btn" type="submit">가입 신청</button>
       </form>`});
     bindCommon();

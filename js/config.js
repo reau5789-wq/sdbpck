@@ -4,7 +4,7 @@
    ================================================================ */
 window.APP_CONFIG = {
   appName: '노회 모바일',
-  version: '1.3.0',
+  version: '1.3.1',
   copyright: 'ⓒ2026 Barista of Soul, All Rights Reserved.',
 
   /* 'demo' = 이 휴대폰 안에서만 저장되는 체험 모드
