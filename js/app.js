@@ -22,7 +22,12 @@
   const kdt = s => { if (!s) return ''; const d = new Date(s); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const digits = s => String(s || '').replace(/[^\d]/g, '');
   const telHref = s => 'tel:' + digits(s);
-  const mapHref = addr => 'https://map.kakao.com/link/search/' + encodeURIComponent(String(addr || '').replace(/^\d{5}\s*/, ''));
+  /* 휴대폰에서는 카카오맵 모바일 화면, PC에서는 일반 화면으로 엽니다 */
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  const mapHref = addr => {
+    const q = encodeURIComponent(String(addr || '').replace(/^\d{5}\s*/, ''));
+    return isMobile ? 'https://m.map.kakao.com/actions/searchView?q=' + q : 'https://map.kakao.com/link/search/' + q;
+  };
   const validHome = u => u && /^https?:\/\/[^/]+\.[^/]+/.test(u);
   const churchOf = name => D.directory.find(r => r[1] === name);
   const honor = role => ({'목사':'목사님','장로':'장로님','전도사':'전도사님','선교사':'선교사님','사무장':'사무장님','사무국 직원':'님'}[role] || '님');
