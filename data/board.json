@@ -252,5 +252,175 @@
    "pinned": false,
    "hasFile": false
   }
+ ],
+ "events": [
+  {
+   "seq": 131243,
+   "date": "2026-09-04",
+   "title": "헌의서류마감일",
+   "important": false
+  },
+  {
+   "seq": 131230,
+   "date": "2026-09-10",
+   "title": "정치부면접",
+   "important": false
+  },
+  {
+   "seq": 131233,
+   "date": "2026-09-10",
+   "title": "정치부회의",
+   "important": false
+  },
+  {
+   "seq": 131234,
+   "date": "2026-09-10",
+   "title": "고시위원회의",
+   "important": false
+  },
+  {
+   "seq": 131235,
+   "date": "2026-09-10",
+   "title": "공천위원회의",
+   "important": false
+  },
+  {
+   "seq": 131236,
+   "date": "2026-09-10",
+   "title": "규칙부회의",
+   "important": false
+  },
+  {
+   "seq": 131237,
+   "date": "2026-09-10",
+   "title": "감사위원회의",
+   "important": false
+  },
+  {
+   "seq": 131398,
+   "date": "2026-09-11",
+   "title": "재정부 회의",
+   "important": false
+  },
+  {
+   "seq": 131648,
+   "date": "2026-09-15",
+   "title": "제111회 총회",
+   "important": false
+  },
+  {
+   "seq": 131649,
+   "date": "2026-09-16",
+   "title": "제111회 총회",
+   "important": false
+  },
+  {
+   "seq": 131650,
+   "date": "2026-09-17",
+   "title": "제111회 총회",
+   "important": false
+  },
+  {
+   "seq": 131668,
+   "date": "2026-09-21",
+   "title": "의식위원회 회의",
+   "important": false
+  },
+  {
+   "seq": 131674,
+   "date": "2026-09-23",
+   "title": "의식위원회 회의",
+   "important": false
+  },
+  {
+   "seq": 131238,
+   "date": "2026-09-28",
+   "title": "1차 고시 교육",
+   "important": false
+  },
+  {
+   "seq": 131231,
+   "date": "2026-09-29",
+   "title": "목사안수청원자(배우자포함) 교육",
+   "important": false
+  },
+  {
+   "seq": 131232,
+   "date": "2026-09-29",
+   "title": "부목사, 교육목사 연임청원자 면접 및 교육",
+   "important": false
+  },
+  {
+   "seq": 131239,
+   "date": "2026-09-29",
+   "title": "2차 고시 교육",
+   "important": false
+  },
+  {
+   "seq": 131673,
+   "date": "2026-09-29",
+   "title": "공천위원회의",
+   "important": false
+  },
+  {
+   "seq": 131240,
+   "date": "2026-10-01",
+   "title": "3차 고시 교육",
+   "important": false
+  },
+  {
+   "seq": 131241,
+   "date": "2026-10-02",
+   "title": "고시 및 면접",
+   "important": false
+  },
+  {
+   "seq": 131242,
+   "date": "2026-10-02",
+   "title": "신학수업계속허락면담(신대원 재학생)",
+   "important": false
+  },
+  {
+   "seq": 131878,
+   "date": "2026-10-07",
+   "title": "서울동노회 임원과의 간담회",
+   "important": false
+  },
+  {
+   "seq": 131879,
+   "date": "2026-10-07",
+   "title": "제16-12차 정기 임원회의",
+   "important": false
+  },
+  {
+   "seq": 131844,
+   "date": "2026-10-08",
+   "title": "정기감사",
+   "important": false
+  },
+  {
+   "seq": 132101,
+   "date": "2026-10-19",
+   "title": "동반목회지원위원회의",
+   "important": false
+  },
+  {
+   "seq": 131244,
+   "date": "2026-10-22",
+   "title": "제17회 노회",
+   "important": true
+  },
+  {
+   "seq": 131245,
+   "date": "2026-10-22",
+   "title": "목사안수예식",
+   "important": false
+  },
+  {
+   "seq": 132215,
+   "date": "2026-10-29",
+   "title": "제17-1차 임시임원회희",
+   "important": false
+  }
  ]
 }

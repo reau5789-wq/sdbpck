@@ -10,7 +10,7 @@
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   /* 홈페이지 게시판 연동 — GitHub가 30분마다 만드는 data/board.json을 읽습니다 */
-  let feedCache = null, feedAt = 0;
+  let feedCache = null, feedAt = 0, feedEvents = [];
   async function loadFeed() {
     if (feedCache && Date.now() - feedAt < 60000) return feedCache;
     try {
@@ -20,8 +20,15 @@
       const conv = (arr, cat) => (arr || []).map(x => ({id:'n' + x.seq, seq:x.seq, cat, title:x.title, date:x.date, pinned:!!x.pinned,
         files:x.hasFile ? ['첨부파일 있음'] : [], body:'', source:'homepage', createdAt:x.date + 'T09:00:00+09:00'}));
       feedCache = conv(j.notice, 'notice').concat(conv(j.news, 'news')); feedAt = Date.now();
+      feedEvents = (j.events || []).map(e => ({id:'h' + e.seq, seq:e.seq, date:e.date, title:e.title, time:'', place:'', important:!!e.important, source:'homepage'}));
     } catch (e) { feedCache = feedCache || []; }
     return feedCache;
+  }
+  /* 노회 일정: 홈페이지 연동 일정이 있으면 처음 넣어 둔 일정 대신 그것을 쓰고, 앱에서 등록한 일정은 함께 보여 줍니다 */
+  async function mergeEvents(appEvents, seedEvents) {
+    await loadFeed();
+    const base = feedEvents.length ? feedEvents : seedEvents;
+    return base.concat(appEvents).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
   }
   /* 기본 자료(홈페이지 초기 수집) + 연동 자료 + 앱에서 쓴 공지를 합칩니다. 같은 글은 연동 자료가 우선 */
   function mergeNotices(base, feed) {
@@ -104,7 +111,10 @@
       async readNotice(id) { if (!db.readNotices.includes(id)) { db.readNotices.push(id); save(); } },
       async readNoticeIds() { return db.readNotices; },
 
-      async listEvents() { return [...db.events].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)); },
+      async listEvents() {
+        const seedE = db.events.filter(e => /^e\d+$/.test(e.id)).map(e => ({...e, source:'homepage'}));
+        return mergeEvents(db.events.filter(e => !/^e\d+$/.test(e.id)), seedE);
+      },
       async addEvent(e) { const x = {...e, id:uid()}; db.events.push(x); notify('*', '새 일정', `${e.date} ${e.title}`, 'calendar'); save(); return x; },
       async deleteEvent(id) { db.events = db.events.filter(e => e.id !== id); save(); },
 
@@ -232,7 +242,7 @@
 
       async listEvents() {
         const seedE = seed.events.map((e, i) => ({...e, id:'e' + i, time:e.time || '', place:e.place || '', source:'homepage'}));
-        return (await list(col('events').orderBy('date'))).concat(seedE).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+        return mergeEvents(await list(col('events').orderBy('date')), seedE);
       },
       async addEvent(e) { const ref = await col('events').add(e); await notify('*', '새 일정', `${e.date} ${e.title}`, 'calendar'); return {id:ref.id, ...e}; },
       async deleteEvent(id) { await col('events').doc(id).delete(); },

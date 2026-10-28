@@ -1,7 +1,7 @@
 /* ================================================================
    노회 홈페이지 게시판 → 앱 연동
    GitHub Actions가 30분마다 이 파일을 실행합니다.
-   노회공지·소속교회 동정 게시판 첫 페이지를 읽어 data/board.json으로 저장하고,
+   노회공지·소속교회 동정 게시판 첫 페이지와 노회 일정(지난달~3개월 뒤)을 읽어 data/board.json으로 저장하고,
    앱은 이 파일을 읽어 공지 목록에 보여 줍니다. (사무국은 홈페이지에만 올리면 됩니다)
    ================================================================ */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -37,6 +37,36 @@ export function parseBoardList(html, boardSeq) {
   return out;
 }
 
+/* 홈페이지 달력 자료(ajax_calendar.asp)에서 공개 일정을 뽑습니다 */
+export function parseCalendar(text) {
+  const out = [];
+  const blocks = text.split(/'date'\s*:/).slice(1);
+  for (const b of blocks) {
+    const d = (b.match(/^\s*'(\d{8})'/) || [])[1];
+    if (!d) continue;
+    const date = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+    const re = /\{\s*'dec'\s*:\s*'([\s\S]*?)'\s*,\s*'seq'\s*:\s*'(\d+)'\s*,\s*'sopen'\s*:\s*'([YN])'\s*\}/g;
+    let m;
+    while ((m = re.exec(b))) {
+      if (m[3] !== 'Y') continue;                       // 비공개 일정은 가져오지 않음
+      const title = m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
+      out.push({ seq: Number(m[2]), date, title, important: /정기노회|제\s*\d+\s*회\s*노회$/.test(title) });
+    }
+  }
+  return out;
+}
+
+/* 한국 시간 기준 지난달부터 3개월 뒤까지의 'YYYYMM' 목록 */
+function monthsToSync() {
+  const now = new Date(Date.now() + 9 * 3600e3);
+  const list = [];
+  for (let k = -1; k <= 3; k++) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + k, 1));
+    list.push(`${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+  }
+  return list;
+}
+
 async function getText(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)' } });
   if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
@@ -60,6 +90,21 @@ async function main() {
     next[b.key] = merged;
     console.log(`${b.key}: ${fresh.length}건 읽음, 최신 "${fresh.filter(x => !x.pinned)[0]?.title || '-'}"`);
   }
+
+  /* 노회 일정: 읽은 달은 홈페이지 내용으로 바꾸고(지운 일정은 빠짐), 그 전 달은 1년까지 보관 */
+  const months = monthsToSync();
+  const fresh = [];
+  for (const ym of months) {
+    const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`);
+    fresh.push(...parseCalendar(t));
+  }
+  const inRange = e => months.includes(e.date.slice(0, 7).replace('-', ''));
+  const cutoff = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
+  const events = (prev.events || []).filter(e => !inRange(e) && e.date >= cutoff).concat(fresh)
+    .sort((a, c) => a.date.localeCompare(c.date) || a.seq - c.seq);
+  if (JSON.stringify(events) !== JSON.stringify(prev.events || [])) changed = true;
+  next.events = events;
+  console.log(`events: ${months[0]}~${months.at(-1)} ${fresh.length}건 읽음`);
 
   if (!changed) { console.log('바뀐 글 없음'); return; }
   next.updatedAt = new Date().toISOString();

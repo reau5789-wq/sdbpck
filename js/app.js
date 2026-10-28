@@ -388,7 +388,8 @@
       <div class="list">${dayEvents.map(eventRow).join('') || '<div class="empty">이날 일정이 없습니다</div>'}</div>
       <h2 class="sec">${calM + 1}월 전체 일정 <span class="muted small">${monthEvents.length}건</span></h2>
       <div class="list">${monthEvents.map(eventRow).join('') || '<div class="empty">이달 일정이 없습니다</div>'}</div>
-      ${me.admin ? `<div class="btns"><button class="btn" data-go="#admin/event">${ic('plus', 20)} 일정 등록</button></div>` : ''}`});
+      <p class="hint" style="margin:12px 2px 0">노회 홈페이지 달력의 일정이 30분마다 자동으로 반영됩니다.</p>
+      ${me.admin ? `<div class="btns"><button class="btn" data-go="#admin/event">${ic('plus', 20)} 앱에서만 일정 등록</button></div>` : ''}`});
     bindCommon(); bindIcs(events);
     $app.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { calM += +b.dataset.m; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } viewCalendar(); });
     $app.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { calSel = b.dataset.d; viewCalendar(); });
