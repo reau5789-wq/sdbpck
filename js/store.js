@@ -8,6 +8,27 @@
 (function () {
   const C = window.APP_CONFIG;
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  /* 홈페이지 게시판 연동 — GitHub가 30분마다 만드는 data/board.json을 읽습니다 */
+  let feedCache = null, feedAt = 0;
+  async function loadFeed() {
+    if (feedCache && Date.now() - feedAt < 60000) return feedCache;
+    try {
+      const r = await fetch('data/board.json?t=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      const conv = (arr, cat) => (arr || []).map(x => ({id:'n' + x.seq, seq:x.seq, cat, title:x.title, date:x.date, pinned:!!x.pinned,
+        files:x.hasFile ? ['첨부파일 있음'] : [], body:'', source:'homepage', createdAt:x.date + 'T09:00:00+09:00'}));
+      feedCache = conv(j.notice, 'notice').concat(conv(j.news, 'news')); feedAt = Date.now();
+    } catch (e) { feedCache = feedCache || []; }
+    return feedCache;
+  }
+  /* 기본 자료(홈페이지 초기 수집) + 연동 자료 + 앱에서 쓴 공지를 합칩니다. 같은 글은 연동 자료가 우선 */
+  function mergeNotices(base, feed) {
+    const m = new Map(base.map(n => [n.id, n]));
+    feed.forEach(n => m.set(n.id, {...(m.get(n.id) || {}), ...n}));
+    return [...m.values()].sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  }
   const nowIso = () => new Date().toISOString();
 
   /* ---------------- 체험 모드 ---------------- */
@@ -72,7 +93,7 @@
         save();
       },
 
-      async listNotices() { return [...db.notices].sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || '')); },
+      async listNotices() { return mergeNotices(db.notices, await loadFeed()); },
       async addNotice(n) {
         const x = {...n, id:uid(), date:n.date || nowIso().slice(0, 10), createdAt:nowIso(), source:'app'};
         db.notices.unshift(x);
@@ -197,7 +218,7 @@
       async listNotices() {
         const seedN = seed.notices.map(n => ({...n, id:'n' + n.seq, body:'', source:'homepage', createdAt:n.date + 'T09:00:00+09:00'}));
         const rows = (await list(col('notices').orderBy('date', 'desc').limit(100))).concat(seedN);
-        return rows.sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || b.date.localeCompare(a.date));
+        return mergeNotices(rows, await loadFeed());
       },
       async addNotice(n) {
         const x = {...n, date:n.date || nowIso().slice(0, 10), createdAt:nowIso(), source:'app'};
