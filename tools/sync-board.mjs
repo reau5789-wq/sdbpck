@@ -1,0 +1,73 @@
+/* ================================================================
+   노회 홈페이지 게시판 → 앱 연동
+   GitHub Actions가 30분마다 이 파일을 실행합니다.
+   노회공지·소속교회 동정 게시판 첫 페이지를 읽어 data/board.json으로 저장하고,
+   앱은 이 파일을 읽어 공지 목록에 보여 줍니다. (사무국은 홈페이지에만 올리면 됩니다)
+   ================================================================ */
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+
+const SITE = process.env.SYNC_SITE || 'https://sdbpck.or.kr';
+const BOARDS = [
+  { key: 'notice', seq: 1, lef: 'nav25' },   // 노회공지
+  { key: 'news',   seq: 2, lef: 'nav26' }    // 소속교회 동정
+];
+const OUT = 'data/board.json';
+const KEEP = 60;   // 게시판마다 최근 60개까지 보관
+
+/* 게시판 목록 HTML에서 글 목록을 뽑습니다 (브라우저·Node 공용 함수) */
+export function parseBoardList(html, boardSeq) {
+  const rows = html.split(/<tr[^>]*class="[^"]*sboard_list_line[^"]*"[^>]*>/i).slice(1).map(r => r.split(/<\/tr>/i)[0]);
+  const strip = s => s.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
+  const out = [];
+  for (const r of rows) {
+    const link = r.match(new RegExp(`href="read\\.asp\\?board_seq=${boardSeq}[^"]*?[?&]seq=(\\d+)[^"]*"[^>]*>([\\s\\S]*?)</a>`, 'i'));
+    if (!link) continue;
+    const num = strip((r.match(/<td[^>]*class="[^"]*sboard_num[^"]*"[^>]*>([\s\S]*?)<\/td>/i) || [])[1] || '');
+    const date = (strip((r.match(/<td[^>]*class="[^"]*sboard_date[^"]*"[^>]*>([\s\S]*?)<\/td>/i) || [])[1] || '').match(/\d{4}-\d{2}-\d{2}/) || [])[0] || '';
+    const writer = strip((r.match(/<td[^>]*class="[^"]*sboard_pid[^"]*"[^>]*>([\s\S]*?)<\/td>/i) || [])[1] || '');
+    out.push({
+      seq: Number(link[1]),
+      title: strip(link[2]),
+      date,
+      writer,
+      pinned: !/^\d+$/.test(num),          // 번호 대신 '공지'로 표시된 글
+      hasFile: /fa-paperclip/i.test(r)
+    });
+  }
+  return out;
+}
+
+async function getText(url) {
+  const res = await fetch(url, { headers: { 'User-Agent': 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)' } });
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+  return res.text();
+}
+
+async function main() {
+  let prev = { notice: [], news: [] };
+  try { prev = JSON.parse(await readFile(OUT, 'utf8')); } catch {}
+  const next = { updatedAt: prev.updatedAt || null, source: SITE };
+  let changed = false;
+
+  for (const b of BOARDS) {
+    const html = await getText(`${SITE}/modu/s_board/list.asp?board_seq=${b.seq}&lef=${b.lef}`);
+    const fresh = parseBoardList(html, b.seq);
+    if (!fresh.length) throw new Error(`${b.key}: 글을 하나도 읽지 못했습니다 (홈페이지 구조가 바뀌었을 수 있음)`);
+    const bySeq = new Map((prev[b.key] || []).map(x => [x.seq, x]));
+    for (const x of fresh) bySeq.set(x.seq, { ...bySeq.get(x.seq), ...x });
+    const merged = [...bySeq.values()].sort((a, c) => (c.pinned - a.pinned) || c.date.localeCompare(a.date) || c.seq - a.seq).slice(0, KEEP);
+    if (JSON.stringify(merged) !== JSON.stringify(prev[b.key] || [])) changed = true;
+    next[b.key] = merged;
+    console.log(`${b.key}: ${fresh.length}건 읽음, 최신 "${fresh.filter(x => !x.pinned)[0]?.title || '-'}"`);
+  }
+
+  if (!changed) { console.log('바뀐 글 없음'); return; }
+  next.updatedAt = new Date().toISOString();
+  await mkdir('data', { recursive: true });
+  await writeFile(OUT, JSON.stringify(next, null, 1) + '\n');
+  console.log('data/board.json 저장');
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(e => { console.error(e.message); process.exit(1); });
+}
