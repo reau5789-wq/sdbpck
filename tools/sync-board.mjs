@@ -98,7 +98,10 @@ async function main() {
   try {
     // 달력은 홈페이지 세션 쿠키가 있어야 응답하므로 첫 화면을 먼저 엽니다
     const home = await fetch(`${SITE}/`, { headers: { 'User-Agent': UA } });
-    const cookie = (home.headers.getSetCookie?.() || []).map(c => c.split(';')[0]).join('; ');
+    const jar = (home.headers.getSetCookie?.() || []).map(c => c.split(';')[0]);
+    // 웹처치 서버가 어느 교회 사이트인지 알아보는 쿠키 (없으면 HTTP 500)
+    if (!jar.some(c => c.startsWith('com='))) jar.push(`com=${process.env.SYNC_COM_COOKIE || 'communityid=20220103050001&church=%2Fpcksdb%2F&natime=0'}`);
+    const cookie = jar.join('; ');
     for (const ym of months) {
       const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`, { 'Referer': `${SITE}/`, 'X-Requested-With': 'XMLHttpRequest', ...(cookie ? { Cookie: cookie } : {}) });
       fresh.push(...parseCalendar(t));
