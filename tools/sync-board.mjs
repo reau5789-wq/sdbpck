@@ -67,8 +67,8 @@ function monthsToSync() {
   return list;
 }
 
-async function getText(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)' } });
+async function getText(url, extra = {}) {
+  const res = await fetch(url, { headers: { 'User-Agent': 'sdbpck-mobile-app-sync/1.0 (+https://reau5789-wq.github.io/sdbpck/)', ...extra } });
   if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
   return res.text();
 }
@@ -94,9 +94,16 @@ async function main() {
   /* 노회 일정: 읽은 달은 홈페이지 내용으로 바꾸고(지운 일정은 빠짐), 그 전 달은 1년까지 보관 */
   const months = monthsToSync();
   const fresh = [];
-  for (const ym of months) {
-    const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`);
-    fresh.push(...parseCalendar(t));
+  try {
+    for (const ym of months) {
+      const t = await getText(`${SITE}/ajax_calendar.asp?date=${ym}`, { 'Referer': `${SITE}/`, 'X-Requested-With': 'XMLHttpRequest' });
+      fresh.push(...parseCalendar(t));
+    }
+  } catch (e) {
+    // 달력을 못 읽어도 공지 연동은 계속하고, 기존 일정은 그대로 둡니다
+    console.log(`::warning::달력 읽기 실패 — ${e.message}`);
+    next.events = prev.events || [];
+    return finish(prev, next, changed);
   }
   const inRange = e => months.includes(e.date.slice(0, 7).replace('-', ''));
   const cutoff = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
@@ -105,7 +112,10 @@ async function main() {
   if (JSON.stringify(events) !== JSON.stringify(prev.events || [])) changed = true;
   next.events = events;
   console.log(`events: ${months[0]}~${months.at(-1)} ${fresh.length}건 읽음`);
+  return finish(prev, next, changed);
+}
 
+async function finish(prev, next, changed) {
   if (!changed) { console.log('바뀐 글 없음'); return; }
   next.updatedAt = new Date().toISOString();
   await mkdir('data', { recursive: true });
@@ -114,5 +124,5 @@ async function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(e => { console.error(e.message); process.exit(1); });
+  main().catch(e => { console.log(`::error::${e.message}`); process.exit(1); });
 }
