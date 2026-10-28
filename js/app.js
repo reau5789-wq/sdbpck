@@ -52,6 +52,7 @@
     shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
     plus:'<path d="M12 5v14M5 12h14"/>',
     ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    logout:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
     info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'
   };
   const ic = (n, s = 22, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -77,7 +78,7 @@
 
   /* ---------- 틀 ---------- */
   function frame({title, sub, back, tab, body, noTabs}) {
-    const tabs = [['home','홈','home'],['notices','공지','news'],['calendar','일정','cal'],['apply','신청','doc'],['more','더보기','more']];
+    const tabs = [['home','홈','home'],['notices','공지','news'],['calendar','일정','cal'],['apply','신청','doc'],['logout', S.mode === 'demo' ? '체험종료' : '로그아웃','logout'],['more','더보기','more']];
     return `
       <header class="topbar">
         ${back ? `<button class="back" data-back aria-label="뒤로">${ic('back', 26, 2.2)}</button>` : ''}
@@ -87,11 +88,17 @@
       ${S.mode === 'demo' ? `<div class="demo-band">체험 모드 · 입력한 내용은 이 휴대폰에만 저장됩니다</div>` : ''}
       <main class="${noTabs ? 'noTabs' : ''}">${body}</main>
       ${noTabs ? '' : `<nav class="tabs"><div class="wrap">${tabs.map(([k, l, i]) =>
+        k === 'logout' ? `<button data-tab-logout>${ic(i, 24, 1.8)}<span>${l}</span></button>` :
         `<button class="${tab === k ? 'on' : ''}" data-go="#${k}">${ic(i, 24, tab === k ? 2.1 : 1.8)}<span>${l}</span>${k === 'notices' && unreadNotices ? `<span class="badge">${unreadNotices > 9 ? '9+' : unreadNotices}</span>` : ''}</button>`).join('')}</div></nav>`}`;
   }
   function bindCommon() {
     $app.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); go(b.dataset.go); }));
     const bk = $app.querySelector('[data-back]'); if (bk) bk.onclick = () => history.length > 1 ? history.back() : go('#home');
+    const tl = $app.querySelector('[data-tab-logout]');
+    if (tl) tl.onclick = async () => {
+      const msg = S.mode === 'demo' ? '체험을 마치고 첫 화면으로 갈까요?' : '로그아웃할까요? 다시 로그인하면 그대로 쓰실 수 있습니다.';
+      if (await confirmBox(msg, S.mode === 'demo' ? '체험 종료' : '로그아웃')) { await S.logout(); me = null; location.hash = ''; route(); }
+    };
   }
   async function refreshBadges() {
     const ns = await S.listNotifications(); unread = ns.filter(n => !n.read).length;
@@ -105,16 +112,24 @@
     const others = Object.values(C.presbyteries).filter(p => p.id !== P.id);
     $app.innerHTML = `
       <div class="welcome">
-        <div class="brand"><img src="icons/wordmark.png" alt="대한예수교장로회 ${esc(P.name)}" width="223" height="58"></div>
-        <h1>모바일 업무 앱</h1>
-        <p class="sub">회원교회 목사님·장로님과 노회 사무국을 잇습니다</p>
+        <div class="logo">${churchLogo(46)}</div>
+        <h1>${esc(P.name)} 모바일</h1>
+        <p class="sub">회원교회 목사님·장로님을 위한 노회 업무 앱</p>
         <div class="card">
           ${S.mode === 'live' ? `
             <h2 class="sec" style="margin-top:0">로그인</h2>
-            <p class="small muted" style="margin:0 0 14px">평소 쓰시는 카카오나 구글 계정으로 들어오세요. 처음이시면 로그인 후 가입 신청을 하시고, 노회 사무국 승인 후 이용하실 수 있습니다.</p>
-            ${(C.login || {}).kakao ? `<button class="btn kakao" data-login="kakao">카카오 계정으로 시작</button>` : ''}
-            ${(C.login || {}).google ? `<div class="btns"><button class="btn google" data-login="google">구글 계정으로 시작</button></div>` : ''}
-            <p class="hint" style="margin-top:12px">한 번 가입하면 휴대폰과 PC 어디서든 같은 계정으로 쓰실 수 있습니다.</p>` : `
+            <form id="lf">
+              <div class="field"><input class="input" id="lf-email" name="email" type="email" inputmode="email" autocomplete="username" placeholder="이메일" required></div>
+              <div class="field"><input class="input" id="lf-pw" name="pw" type="password" autocomplete="current-password" placeholder="비밀번호" required></div>
+              <button class="btn" type="submit">로그인</button>
+            </form>
+            <div style="text-align:right;margin-top:8px"><button class="linkbtn" data-reset-pw>비밀번호를 잊으셨나요?</button></div>
+            <div class="or"><span>또는</span></div>
+            <button class="btn kakao" data-login="kakao">카카오 계정으로 로그인</button>
+            <div class="btns"><button class="btn google" data-login="google">구글 계정으로 로그인</button></div>
+            <div style="border-top:1px solid var(--line);margin:20px 0 14px"></div>
+            <p class="small muted" style="margin:0 0 10px">처음 오셨나요? 가입 신청 후 노회 사무국 승인을 받으면 이용하실 수 있습니다.</p>
+            <button class="btn line" data-join>회원가입</button>` : `
             <h2 class="sec" style="margin-top:0">처음 오셨나요?</h2>
             <p class="small muted" style="margin:0 0 14px">가입 신청을 하시면 노회 사무국에서 확인 후 승인해 드립니다. 승인되면 공지·일정을 받아보고 증명서를 신청하실 수 있습니다.</p>
             <button class="btn" data-signup>가입 신청하기</button>`}
@@ -134,11 +149,74 @@
         <div class="foot">${esc(C.copyright)}</div>
       </div>`;
     const su = $app.querySelector('[data-signup]'); if (su) su.onclick = viewSignup;
+    const jn = $app.querySelector('[data-join]'); if (jn) jn.onclick = viewJoin;
+    const lf = $app.querySelector('#lf');
+    if (lf) lf.onsubmit = async e => {
+      e.preventDefault();
+      const btn = lf.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = '로그인 중…';
+      try { me = await S.emailSignIn(lf.email.value.trim(), lf.pw.value); await route(); }
+      catch (err) { toast(authMsg(err)); btn.disabled = false; btn.textContent = '로그인'; }
+    };
+    const rp = $app.querySelector('[data-reset-pw]');
+    if (rp) rp.onclick = async () => {
+      const email = lf.email.value.trim();
+      if (!email) return toast('위 칸에 가입한 이메일을 먼저 적어 주세요');
+      try { await S.resetPassword(email); toast('비밀번호 재설정 메일을 보냈습니다. 메일함을 확인해 주세요'); }
+      catch (err) { toast(authMsg(err)); }
+    };
     $app.querySelectorAll('[data-login]').forEach(b => b.onclick = () => doLogin(b.dataset.login, b));
     $app.querySelectorAll('[data-demo]').forEach(b => b.onclick = async () => { me = await S.demoLogin(b.dataset.demo); await refreshBadges(); go('#home'); route(); });
   }
 
+  function authMsg(e) {
+    return ({
+      'auth/popup-closed-by-user':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
+      'auth/cancelled-popup-request':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
+      'auth/popup-blocked':'팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.',
+      'auth/operation-not-allowed':'이 로그인 방법이 아직 준비되지 않았습니다. 사무국에 알려 주세요.',
+      'auth/unauthorized-domain':'로그인이 허용되지 않은 주소입니다. 관리자에게 알려 주세요.',
+      'auth/network-request-failed':'인터넷 연결을 확인해 주세요.',
+      'auth/invalid-email':'이메일 형식이 올바르지 않습니다.',
+      'auth/invalid-credential':'이메일 또는 비밀번호가 맞지 않습니다.',
+      'auth/invalid-login-credentials':'이메일 또는 비밀번호가 맞지 않습니다.',
+      'auth/wrong-password':'이메일 또는 비밀번호가 맞지 않습니다.',
+      'auth/user-not-found':'가입되지 않은 이메일입니다. 회원가입을 해 주세요.',
+      'auth/email-already-in-use':'이미 가입된 이메일입니다. 로그인해 주세요.',
+      'auth/weak-password':'비밀번호는 6자 이상으로 해 주세요.',
+      'auth/missing-password':'비밀번호를 입력해 주세요.',
+      'auth/too-many-requests':'시도가 너무 많습니다. 잠시 후 다시 해 주세요.',
+      'auth/credential-already-in-use':'이미 다른 회원이 쓰는 계정입니다.'
+    })[e.code] || ('처리하지 못했습니다: ' + (e.code || e.message));
+  }
+
+  function viewJoin() {
+    $app.innerHTML = frame({title:'회원가입', sub:P.name, back:true, noTabs:true, body:`
+      <div class="note" style="margin:0 0 16px">가입은 두 단계입니다. ① 로그인 계정을 만들고 ② 교회·직분을 적어 가입 신청을 하시면, 노회 사무국이 확인 후 승인해 드립니다.</div>
+      <h2 class="sec">카카오·구글 계정으로 가입 (간편)</h2>
+      <button class="btn kakao" data-login="kakao">카카오 계정으로 가입</button>
+      <div class="btns"><button class="btn google" data-login="google">구글 계정으로 가입</button></div>
+      <div class="or"><span>또는 이메일로 가입</span></div>
+      <form id="jf">
+        <div class="field"><label>이메일<em>*</em></label><input class="input" id="jf-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="예) name@naver.com"></div>
+        <div class="field"><label>비밀번호<em>*</em></label><input class="input" id="jf-pw" name="pw" type="password" autocomplete="new-password" minlength="6" required placeholder="6자 이상"></div>
+        <div class="field"><label>비밀번호 확인<em>*</em></label><input class="input" id="jf-pw2" name="pw2" type="password" autocomplete="new-password" minlength="6" required></div>
+        <button class="btn" type="submit">다음 (가입 정보 입력)</button>
+      </form>`});
+    bindCommon();
+    $app.querySelector('[data-back]').onclick = () => viewWelcome();
+    $app.querySelectorAll('[data-login]').forEach(b => b.onclick = () => doLogin(b.dataset.login, b));
+    const f = $app.querySelector('#jf');
+    f.onsubmit = async e => {
+      e.preventDefault();
+      if (f.pw.value !== f.pw2.value) return toast('비밀번호가 서로 다릅니다');
+      const btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = '계정 만드는 중…';
+      try { me = await S.emailSignUp(f.email.value.trim(), f.pw.value); if (me) await route(); else viewSignup(); }
+      catch (err) { toast(authMsg(err)); btn.disabled = false; btn.textContent = '다음 (가입 정보 입력)'; }
+    };
+  }
+
   async function doLogin(kind, btn) {
+    if (kind === 'kakao' && !(C.login || {}).kakao) return toast('카카오 로그인은 준비 중입니다. 구글이나 이메일로 이용해 주세요.');
     const label = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = '로그인 중…'; }
     try {
@@ -146,15 +224,7 @@
       if (me) { toast(me.status === 'approved' ? '로그인했습니다' : '가입 신청 상태를 확인합니다'); await route(); }
       else viewSignup();
     } catch (e) {
-      const msg = {
-        'auth/popup-closed-by-user':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
-        'auth/cancelled-popup-request':'로그인 창이 닫혔습니다. 다시 눌러 주세요.',
-        'auth/popup-blocked':'팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.',
-        'auth/operation-not-allowed':'이 로그인 방법이 아직 준비되지 않았습니다. 사무국에 알려 주세요.',
-        'auth/unauthorized-domain':'로그인이 허용되지 않은 주소입니다. 관리자에게 알려 주세요.',
-        'auth/network-request-failed':'인터넷 연결을 확인해 주세요.'
-      }[e.code] || ('로그인하지 못했습니다: ' + (e.code || e.message));
-      toast(msg); console.error(e);
+      toast(authMsg(e)); console.error(e);
       if (btn) { btn.disabled = false; btn.textContent = label; }
     }
   }
@@ -218,7 +288,7 @@
   }
 
   function churchLogo(s) {
-    return `<img src="icons/logo.png" width="${s + 14}" height="${s + 14}" alt="${esc(P.name)} 로고" style="display:block;border-radius:50%">`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1d3557"/><path d="M24 8v9M19.5 12.5h9" stroke="#e0b65a" stroke-width="3" stroke-linecap="round"/><path d="M12 38V26l12-8 12 8v12z" fill="#fff"/><path d="M21 38v-6a3 3 0 0 1 6 0v6" fill="#1d3557"/></svg>`;
   }
 
   /* ---------- 홈 ---------- */

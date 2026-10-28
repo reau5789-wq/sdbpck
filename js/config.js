@@ -4,7 +4,7 @@
    ================================================================ */
 window.APP_CONFIG = {
   appName: '노회 모바일',
-  version: '1.1.0',
+  version: '1.2.0',
   copyright: 'ⓒ2026 Barista of Soul, All Rights Reserved.',
 
   /* 'demo' = 이 휴대폰 안에서만 저장되는 체험 모드
@@ -13,6 +13,7 @@ window.APP_CONFIG = {
 
   /* 로그인 방법 — Firebase Authentication에서 켠 것만 true로 */
   login: {
+    email: true,               // 이메일·비밀번호 회원가입
     google: true,
     kakao: false,              // 카카오 OIDC 설정을 마치면 true로
     kakaoProviderId: 'oidc.kakao'

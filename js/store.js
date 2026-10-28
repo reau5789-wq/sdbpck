@@ -61,6 +61,7 @@
       async withdraw() { db.me = null; save(); },
       isSignedIn() { return false; }, isLegacyDevice() { return false; }, authName() { return ''; }, providerId() { return ''; },
       async socialSignIn() { throw new Error('체험 모드에서는 쓸 수 없습니다'); },
+      async emailSignIn() { throw new Error('체험 모드'); }, async emailSignUp() { throw new Error('체험 모드'); }, async resetPassword() {},
       async resetDemo() { localStorage.removeItem(KEY); load(); },
 
       async listMembers(status) { return db.members.filter(m => !status || m.status === status); },
@@ -155,6 +156,14 @@
         }
         return this.refreshMe();
       },
+      async emailSignIn(email, pw) { await auth.signInWithEmailAndPassword(email, pw); return this.refreshMe(); },
+      async emailSignUp(email, pw) {
+        const cur = auth.currentUser;
+        if (cur && cur.isAnonymous) await cur.linkWithCredential(firebase.auth.EmailAuthProvider.credential(email, pw));
+        else await auth.createUserWithEmailAndPassword(email, pw);
+        return this.refreshMe();
+      },
+      async resetPassword(email) { auth.languageCode = 'ko'; await auth.sendPasswordResetEmail(email); },
       async currentUser() { return me; },
       async demoLogin() { throw new Error('운영 모드에서는 체험하기를 쓸 수 없습니다.'); },
       async signup(profile) {
