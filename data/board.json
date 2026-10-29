@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-28T09:40:56.503Z",
+ "updatedAt": "2026-10-29T02:17:51.933Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -131,6 +131,14 @@
    "writer": "관리자",
    "pinned": true,
    "hasFile": false
+  },
+  {
+   "seq": 550,
+   "title": "[진관제일교회]임직 및 은퇴 감사예배",
+   "date": "2026-10-29",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": true
   },
   {
    "seq": 542,
