@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-29T02:17:51.933Z",
+ "updatedAt": "2026-11-03T03:59:40.479Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -125,11 +125,11 @@
  ],
  "news": [
   {
-   "seq": 548,
-   "title": "[광릉내]곽안련선교사 학술세미나",
-   "date": "2026-10-23",
+   "seq": 554,
+   "title": "[마장] 장석준 목사 위임예식",
+   "date": "2026-11-03",
    "writer": "관리자",
-   "pinned": true,
+   "pinned": false,
    "hasFile": false
   },
   {
@@ -139,6 +139,14 @@
    "writer": "관리자",
    "pinned": false,
    "hasFile": true
+  },
+  {
+   "seq": 548,
+   "title": "[광릉내]곽안련선교사 학술세미나",
+   "date": "2026-10-23",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": false
   },
   {
    "seq": 542,
