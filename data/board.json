@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-05T01:43:50.011Z",
+ "updatedAt": "2026-11-05T09:21:15.162Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -146,7 +146,7 @@
    "date": "2026-11-05",
    "writer": "관리자",
    "pinned": false,
-   "hasFile": false
+   "hasFile": true
   },
   {
    "seq": 554,
