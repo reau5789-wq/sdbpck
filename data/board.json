@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-03T11:49:47.206Z",
+ "updatedAt": "2026-11-05T01:43:50.011Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -132,6 +132,22 @@
   }
  ],
  "news": [
+  {
+   "seq": 557,
+   "title": "[가양]김보라 목사 위임예식",
+   "date": "2026-11-05",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": false
+  },
+  {
+   "seq": 556,
+   "title": "[화도광성]박영호 목사 위임예식",
+   "date": "2026-11-05",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": false
+  },
   {
    "seq": 554,
    "title": "[마장] 장석준 목사 위임예식",
