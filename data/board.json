@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-05T09:21:15.162Z",
+ "updatedAt": "2026-11-10T23:41:47.193Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -445,6 +445,12 @@
    "important": false
   },
   {
+   "seq": 132398,
+   "date": "2026-10-20",
+   "title": "동반목회지원위원회 회의",
+   "important": false
+  },
+  {
    "seq": 131244,
    "date": "2026-10-22",
    "title": "제17회 노회",
@@ -460,6 +466,24 @@
    "seq": 132215,
    "date": "2026-10-29",
    "title": "제17-1차 임시임원회희",
+   "important": false
+  },
+  {
+   "seq": 132399,
+   "date": "2026-10-30",
+   "title": "사회봉사부 회의",
+   "important": false
+  },
+  {
+   "seq": 132401,
+   "date": "2026-11-03",
+   "title": "개척전도위원회의",
+   "important": false
+  },
+  {
+   "seq": 132402,
+   "date": "2026-11-05",
+   "title": "정치부 회의",
    "important": false
   }
  ]
