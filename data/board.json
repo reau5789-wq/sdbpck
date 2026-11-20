@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-13T14:51:04.846Z",
+ "updatedAt": "2026-11-20T06:58:08.408Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -140,6 +140,14 @@
   }
  ],
  "news": [
+  {
+   "seq": 559,
+   "title": "[행복한]유봉환 장로 원로장로 추대예식",
+   "date": "2026-11-20",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": false
+  },
   {
    "seq": 557,
    "title": "[가양]김보라 목사 위임예식",
