@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-24T17:28:03.382Z",
+ "updatedAt": "2026-11-26T02:45:13.353Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -148,6 +148,14 @@
   }
  ],
  "news": [
+  {
+   "seq": 561,
+   "title": "[예터]장로 임직예식",
+   "date": "2026-11-26",
+   "writer": "관리자",
+   "pinned": false,
+   "hasFile": false
+  },
   {
    "seq": 559,
    "title": "[행복한]유봉환 장로 원로장로 추대예식",
