@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-26T02:45:13.353Z",
+ "updatedAt": "2026-11-26T12:12:48.686Z",
  "source": "https://sdbpck.or.kr",
  "notice": [
   {
@@ -516,6 +516,12 @@
    "seq": 132402,
    "date": "2026-11-05",
    "title": "정치부 회의",
+   "important": false
+  },
+  {
+   "seq": 132487,
+   "date": "2026-12-10",
+   "title": "동반목회지원위원회",
    "important": false
   }
  ]
